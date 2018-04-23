@@ -1,0 +1,149 @@
+.TracksList {
+    padding: 24px 28px;
+    padding-top: 30px;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: aliceblue;
+    transform: translateX(-100%);
+    transition: all 0.3s ease-out;
+}
+
+.TracksList .tracks-list-ctr {
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+    overflow-x: hidden;
+}
+
+.TracksList .tracks-list-ctr .tracks-list-upper-elem {
+    height: 100px;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+}
+
+.TracksList .tracks-list-ctr .tracks-list-upper-elem p {
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    font-weight: bold;
+    text-align: left;
+    width: 100%;
+    color: #333;
+}
+
+.TracksList .tracks-list-ctr ul {
+    list-style: none;
+    height: 100%;
+    padding-bottom: 140px;
+}
+
+.TracksList .tracks-list-ctr ul li {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    font-size: 2.1rem;
+    letter-spacing: 0.1ch;
+    margin: 4px 0;
+    padding: 12px 0px;
+    color: #333;
+    font-weight: 300;
+}
+
+.TracksList .tracks-list-ctr ul li.active span {
+    display: inline-block;
+    padding-left: 100%;
+    text-indent: 0;
+    animation: marquee 15s linear infinite;
+    color: rgba(51, 51, 51, 1);
+    backface-visibility: hidden;
+}
+
+@keyframes marquee {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(-100%, 0); }
+}
+
+.TracksList .tracks-list-ctr ul li.active {
+    color: rgba(51, 51, 51, 1);
+    text-overflow: clip;
+    font-weight: bold;
+}
+
+.TracksList .bottom-ctr {
+    background: aliceblue;
+}
+
+.TracksList .search-ctr {
+    display: flex;
+    flex-flow: column;
+    margin-bottom: 30px;
+}
+
+.TracksList .search-ctr input.search-bar {
+    padding: 4px 0px;
+    padding-left: 0;
+    padding-top: 14px;
+    width: 100%;
+    display: block;
+    outline: none;
+    border: none;
+    background: aliceblue;
+    font-size: 4rem;
+    font-weight: 200;
+    color: #333;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.7);
+    box-shadow: 0 -10px 18px -12px rgba(51, 51, 51, 0.15);
+}
+
+.TracksList .search-ctr input.search-bar:focus {
+    border-bottom: 1px solid rgba(51, 51, 51, 0.3);
+    border-bottom-color: tomato;
+}
+
+.TracksList .search-ctr input.search-bar::placeholder {
+    color: #333;
+}
+
+.TracksList .search-ctr input.search-bar::selection {
+    color: aliceblue;
+    background: #333;
+}
+
+.TracksList .bottom-btns-ctr {
+    display: flex;
+    flex-flow: row;
+    margin-bottom: 6px;
+    align-content: center;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.TracksList .bottom-btns-ctr button.back-btn {
+    outline: none;
+    border: none;
+    background: transparent;
+    width: 29px;
+    padding-top: 2px;
+}
+
+.TracksList .bottom-btns-ctr button.back-btn svg {
+    fill: #333;
+    opacity: 0.6;
+}
+
+.TracksList .bottom-btns-ctr button.favs-btn {
+    outline: none;
+    border: none;
+    background: transparent;
+    width: 25px;
+}
+
+.TracksList .bottom-btns-ctr button.favs-btn svg {
+    fill: tomato;
+}
