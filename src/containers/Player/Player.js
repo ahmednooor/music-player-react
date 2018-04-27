@@ -39,6 +39,7 @@ class Player extends Component {
         progressHandleActive: false,
         progressHandleCtrStyleLeft: '0%',
         doneProgressBarStyleRight: '100%',
+        volumeHandleActive: false,
         volumeHandleCtrStyleLeft: '0%',
         doneVolumeBarStyleRight: '100%',
         showfavsonly: false,
@@ -185,144 +186,124 @@ class Player extends Component {
                 this.playPauseAudio();
             }
         );
-        event.target.removeEventListener('touchend', this.onPlayPauseClickHandler);
     }
 
     touchPositionFst = 0;
+    spannedTime = 0;
+    volume = 0;
     
-    progBarClickHandler = (event) => {
+    progBarPickHandler = (event) => {
+        if (event.type === 'mousedown') {
+            this.touchPositionFst = event.pageX;
+            document.addEventListener('mousemove', this.progBarMoveHandler);
+            document.addEventListener('mouseup', this.progBarDropHandler);
+        } else if (event.type === 'touchstart') {
+            this.touchPositionFst = event.touches[0].pageX;
+            event.target.addEventListener('touchmove', this.progBarMoveHandler);
+            event.target.addEventListener('touchend', this.progBarDropHandler);
+        }
+
         const handleCtr = document.getElementById('progressHandleCtr');
         const progressBarWidth = 
             parseFloat(window.getComputedStyle(handleCtr.parentElement, null).width);
 
-        let pointX = event.pageX;
         let handleCtrStyleLeft = 
-            (pointX - handleCtr.parentElement.clientLeft 
+            (this.touchPositionFst - handleCtr.parentElement.clientLeft 
             - parseFloat(window.getComputedStyle(
                 document.getElementsByClassName('Player')[0], null).paddingLeft
             )) + 'px';
-        let doneProgressBarStyleRight = 
-            (progressBarWidth - parseFloat(handleCtrStyleLeft)) + 'px';
 
         if (parseFloat(handleCtrStyleLeft) < 0) {
             handleCtrStyleLeft = '0px';
         } else if (parseFloat(handleCtrStyleLeft) > progressBarWidth) {
             handleCtrStyleLeft = progressBarWidth + 'px';
         }
-        if (parseFloat(doneProgressBarStyleRight) < 0) {
-            doneProgressBarStyleRight = '0px';
-        } else if (parseFloat(doneProgressBarStyleRight) > progressBarWidth) {
-            doneProgressBarStyleRight = progressBarWidth + 'px';
-        }
 
-        const spannedTime = 
+        this.spannedTime = 
             parseFloat(this.state.player.duration / progressBarWidth)
             * parseFloat(handleCtrStyleLeft);
         
-        const player = this.state.player;
-        player.currentTime = spannedTime;
         this.setState(
             {
-                player: player,
-                progressHandleActive: false,
-                currentTime: spannedTime.toString().toHHMMSS(),
+                progressHandleActive: true,
                 progressHandleCtrStyleLeft: handleCtrStyleLeft,
-                doneProgressBarStyleRight: doneProgressBarStyleRight,
-                progressSpanTime: spannedTime.toString().toHHMMSS()
+                progressSpanTime: this.spannedTime.toString().toHHMMSS()
             }
         );
     }
-    progBarPickHandler = (event) => {
-        event.stopPropagation();
-        this.setState({progressHandleActive: true});
-
-        if (event.type === 'mousedown') {
-            this.touchPositionFst = event.pageX;
-            document.addEventListener('mousemove', this.progBarMoveHandler);
-        } else if (event.type === 'touchstart') {
-            this.touchPositionFst = event.touches[0].pageX;
-            event.target.addEventListener('touchmove', this.progBarMoveHandler);
+    progBarMoveHandler = (event) => {
+        let touchPositionSnd = 0;
+        if (event.type === 'mousemove') {
+            touchPositionSnd = event.pageX;
+            document.addEventListener('mouseup', this.progBarDropHandler);
+        } else if (event.type === 'touchmove') {
+            touchPositionSnd = event.touches[0].pageX;
+            event.target.addEventListener('touchend', this.progBarDropHandler);
         }
-    }
-    progBarMoveHandler = (ev) => {
-        ev.stopPropagation();
-        ev.preventDefault();
 
         const handleCtr = document.getElementById('progressHandleCtr');
         const progressBarWidth = 
             parseFloat(window.getComputedStyle(handleCtr.parentElement, null).width);
-
-        let touchPositionSnd = 0;
-        if (ev.type === 'mousemove') {
-            touchPositionSnd = ev.pageX;
-        } else if (ev.type === 'touchmove') {
-            touchPositionSnd = ev.touches[0].pageX;
-        }
 
         let calcPosition = touchPositionSnd - this.touchPositionFst;
         this.touchPositionFst = touchPositionSnd;
         
         let handleCtrStyleLeft = parseFloat(this.state.progressHandleCtrStyleLeft) + calcPosition + 'px';
-        let doneProgressBarStyleRight = (progressBarWidth - (parseFloat(this.state.progressHandleCtrStyleLeft) + calcPosition)) + 'px';
 
         if (parseFloat(handleCtrStyleLeft) < 0) {
             handleCtrStyleLeft = '0px';
         } else if (parseFloat(handleCtrStyleLeft) > progressBarWidth) {
             handleCtrStyleLeft = progressBarWidth + 'px';
         }
-        if (parseFloat(doneProgressBarStyleRight) < 0) {
-            doneProgressBarStyleRight = '0px';
-        } else if (parseFloat(doneProgressBarStyleRight) > progressBarWidth) {
-            doneProgressBarStyleRight = progressBarWidth + 'px';
-        }
 
-        const spannedTime = 
+        this.spannedTime = 
             parseFloat(this.state.player.duration / progressBarWidth)
             * parseFloat(handleCtrStyleLeft);
         
         this.setState(
             {
                 progressHandleCtrStyleLeft: handleCtrStyleLeft,
-                progressSpanTime: spannedTime.toString().toHHMMSS()
+                progressSpanTime: this.spannedTime.toString().toHHMMSS()
             }
         );
-
-        const progBarDropHandler = (evt) => {
-            evt.stopPropagation();
-
-            const player = this.state.player;
-            player.currentTime = spannedTime;
-            this.setState(
-                {
-                    player: player,
-                    progressHandleActive: false,
-                    currentTime: spannedTime.toString().toHHMMSS()
-                }
-            );
-            evt.target.removeEventListener('touchmove', this.progBarMoveHandler);
-            evt.target.removeEventListener('touchend', progBarDropHandler);
-            document.removeEventListener('mousemove', this.progBarMoveHandler);
-            document.removeEventListener('mouseup', progBarDropHandler);
-        };
-
-        if (ev.type === 'mousemove') {
-            document.addEventListener('mouseup', progBarDropHandler);
-        } else if (ev.type === 'touchmove') {
-            ev.target.addEventListener('touchend', progBarDropHandler);
-        }
+    }
+    progBarDropHandler = (event) => {
+        const player = this.state.player;
+        player.currentTime = this.spannedTime;
+        this.setState(
+            {
+                player: player,
+                progressHandleActive: false,
+                currentTime: this.spannedTime.toString().toHHMMSS(),
+                progressSpanTime: this.spannedTime.toString().toHHMMSS()
+            },
+            () => {
+                event.target.removeEventListener('touchmove', this.progBarMoveHandler);
+                event.target.removeEventListener('touchend', this.progBarDropHandler);
+                document.removeEventListener('mousemove', this.progBarMoveHandler);
+                document.removeEventListener('mouseup', this.progBarDropHandler);
+            }
+        );        
     }
     
-    volumeBarClickHandler = (event) => {
+    volumeBarPickHandler = (event) => {
+        if (event.type === 'mousedown') {
+            this.touchPositionFst = event.pageX;
+            document.addEventListener('mousemove', this.volumeBarMoveHandler);
+            document.addEventListener('mouseup', this.volumeBarDropHandler);
+        } else if (event.type === 'touchstart') {
+            this.touchPositionFst = event.touches[0].pageX;
+            event.target.addEventListener('touchmove', this.volumeBarMoveHandler);
+            event.target.addEventListener('touchend', this.volumeBarDropHandler);
+        }
+
         const volumeBarWidth = 
             parseFloat(window.getComputedStyle(document.getElementById('volumeBarCtr'), null).width);
 
-        let pointX = event.pageX;
-        
         let handleCtrStyleLeft = 
-            parseFloat(pointX - ((window.innerWidth - volumeBarWidth) / 2)) + 'px'
+            parseFloat(this.touchPositionFst - ((window.innerWidth - volumeBarWidth) / 2)) + 'px'
         let doneVolumeBarStyleRight = 
             (volumeBarWidth - parseFloat(handleCtrStyleLeft)) + 'px';
-
 
         if (parseFloat(handleCtrStyleLeft) < 0) {
             handleCtrStyleLeft = '0px';
@@ -335,46 +316,35 @@ class Player extends Component {
             doneVolumeBarStyleRight = volumeBarWidth + 'px';
         }
 
-        const volume = 
+        this.volume = 
             (parseFloat(1.0 / volumeBarWidth)
             * parseFloat(handleCtrStyleLeft)).toFixed(2);
         
         const player = this.state.player;
-        player.volume = volume;
+        player.volume = this.volume;
         this.setState(
             {
+                volumeHandleActive: true,
                 player: player,
                 volumeHandleCtrStyleLeft: handleCtrStyleLeft,
                 doneVolumeBarStyleRight: doneVolumeBarStyleRight,
-                volume: volume
+                volume: this.volume
             }
         );
-    }
-    volumeBarPickHandler = (event) => {
-        event.stopPropagation();
-
-        if (event.type === 'mousedown') {
-            this.touchPositionFst = event.pageX;
-            document.addEventListener('mousemove', this.volumeBarMoveHandler);
-        } else if (event.type === 'touchstart') {
-            this.touchPositionFst = event.touches[0].pageX;
-            event.target.addEventListener('touchmove', this.volumeBarMoveHandler);
-        }
     } 
-    volumeBarMoveHandler = (ev) => {
-        ev.stopPropagation();
-        ev.preventDefault();
-
+    volumeBarMoveHandler = (event) => {
+        let touchPositionSnd = 0;
+        if (event.type === 'mousemove') {
+            touchPositionSnd = event.pageX;
+            document.addEventListener('mouseup', this.volumeBarDropHandler);
+        } else if (event.type === 'touchmove') {
+            touchPositionSnd = event.touches[0].pageX;
+            event.target.addEventListener('touchend', this.volumeBarDropHandler);
+        }
+        
         const volumeBarWidth = 
             parseFloat(window.getComputedStyle(document.getElementById('volumeBarCtr'), null).width);
 
-        let touchPositionSnd = 0;
-        if (ev.type === 'mousemove') {
-            touchPositionSnd = ev.pageX;
-        } else if (ev.type === 'touchmove') {
-            touchPositionSnd = ev.touches[0].pageX;
-        }
-        
         let calcPosition = touchPositionSnd - this.touchPositionFst;
         this.touchPositionFst = touchPositionSnd;
 
@@ -382,7 +352,6 @@ class Player extends Component {
         let doneVolumeBarStyleRight = 
             (volumeBarWidth - (parseFloat(this.state.volumeHandleCtrStyleLeft) + calcPosition)) + 'px';
 
-
         if (parseFloat(handleCtrStyleLeft) < 0) {
             handleCtrStyleLeft = '0px';
         } else if (parseFloat(handleCtrStyleLeft) > volumeBarWidth) {
@@ -394,34 +363,33 @@ class Player extends Component {
             doneVolumeBarStyleRight = volumeBarWidth + 'px';
         }
 
-        const volume = 
+        this.volume = 
             (parseFloat(1.0 / volumeBarWidth)
             * parseFloat(handleCtrStyleLeft)).toFixed(2);
         
         const player = this.state.player;
-        player.volume = volume;
+        player.volume = this.volume;
         this.setState(
             {
                 player: player,
                 volumeHandleCtrStyleLeft: handleCtrStyleLeft,
                 doneVolumeBarStyleRight: doneVolumeBarStyleRight,
-                volume: volume
+                volume: this.volume
             }
         );
-
-        const volumeBarDropHandler = (evt) => {
-            evt.stopPropagation();
-            evt.target.removeEventListener('touchmove', this.volumeBarMoveHandler);
-            evt.target.removeEventListener('touchend', volumeBarDropHandler);
-            document.removeEventListener('mousemove', this.volumeBarMoveHandler);
-            document.removeEventListener('mouseup', volumeBarDropHandler);
-        };
-
-        if (ev.type === 'mousemove') {
-            document.addEventListener('mouseup', volumeBarDropHandler);
-        } else if (ev.type === 'touchmove') {
-            ev.target.addEventListener('touchend', volumeBarDropHandler);
-        }
+    }
+    volumeBarDropHandler = (event) => {
+        this.setState(
+            {
+                volumeHandleActive: false,
+            },
+            () => {
+                event.target.removeEventListener('touchmove', this.volumeBarMoveHandler);
+                event.target.removeEventListener('touchend', this.volumeBarDropHandler);
+                document.removeEventListener('mousemove', this.volumeBarMoveHandler);
+                document.removeEventListener('mouseup', this.volumeBarDropHandler);
+            }
+        )
     }
 
     loadTrackIntoState = () => {
@@ -536,7 +504,8 @@ class Player extends Component {
                     
                     <div 
                         className="progress-container" 
-                        onClick={this.progBarClickHandler}
+                        onTouchStart={this.progBarPickHandler}
+                        onMouseDown={this.progBarPickHandler}
                     >
                         <div className="progress-bar">
                             <div 
@@ -563,8 +532,6 @@ class Player extends Component {
                                 className="handle"
                                 dangerouslySetInnerHTML={{__html: this.state.progressHandleActive ? `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"viewBox="0 0 67 83" style="enable-background:new 0 0 67 83;" xml:space="preserve"><path d="M33.5,0.8C24,24.7,0.6,29.5,0.6,51.6c0,16.9,15.9,30.6,32.8,30.6c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0	c16.9,0,32.8-13.8,32.8-30.6C66.4,29.5,43,24.7,33.5,0.8z"/></svg>`
                                 : `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"viewBox="0 0 67 83" style="enable-background:new 0 0 67 83;" xml:space="preserve"><path d="M33.5,9.8c4.4,7.4,10,12.9,15.1,17.8c7.7,7.5,13.9,13.5,13.9,23.9c0,14.2-13.5,26.6-28.8,26.6l-0.2,0l-0.1, 0C18,78.2,4.6,65.8,4.6,51.6c0-10.4,6.1-16.4,13.9-23.9C23.5,22.7,29.1,17.2,33.5,9.8 M33.5,0.8C24,24.7,0.6,29.5,0.6,51.6 c0,16.9,15.9,30.6,32.8,30.6c0,0,0.1,0,0.1,0c0,0,0.1,0,0.1,0c16.9,0,32.8-13.8,32.8-30.6C66.4,29.5,43,24.7,33.5,0.8L33.5,0.8z"/></svg>`}}
-                                onTouchStart={this.progBarPickHandler}
-                                onMouseDown={this.progBarPickHandler}
                             ></button>
                         </div>
                     </div>
@@ -578,11 +545,6 @@ class Player extends Component {
                             className="play-control play-pause-container"
                             dangerouslySetInnerHTML={{__html: this.state.playing ? `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 80 80" style="enable-background:new 0 0 80 80;" xml:space="preserve"><g><rect x="15.7" y="9.2" width="19.2" height="61.7"/><rect x="45.2" y="9.2" width="19.2" height="61.7"/></g></svg>`
                             : `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"viewBox="0 0 80 80" style="enable-background:new 0 0 80 80;" xml:space="preserve"><polygon points="17.5,70.8 76.5,40 17.5,9.2 "/></svg>`}}
-                            // onTouchStart={
-                            //     (ev) => {
-                            //         ev.target.addEventListener('touchend', this.onPlayPauseClickHandler);
-                            //     }
-                            // }
                             onClick={this.onPlayPauseClickHandler}
                         ></button>
                         <button 
@@ -591,7 +553,11 @@ class Player extends Component {
                             onClick={this.playNextTrack}
                         ></button>
                     </div>
-                    <div className="volume-container" onClick={this.volumeBarClickHandler}>
+                    <div 
+                        className="volume-container" 
+                        onTouchStart={this.volumeBarPickHandler}
+                        onMouseDown={this.volumeBarPickHandler}
+                    >
                         <div className="volume-icon-ctr">
                             <button 
                                 className="speaker-icon"
@@ -618,8 +584,9 @@ class Player extends Component {
                             >
                                 <button 
                                     className="handle"
-                                    onTouchStart={this.volumeBarPickHandler}
-                                    onMouseDown={this.volumeBarPickHandler}
+                                    style={{
+                                        background: this.state.volumeHandleActive ? "#333" : null
+                                    }}
                                 ></button>
                             </div>
                         </div>
