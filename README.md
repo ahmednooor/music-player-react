@@ -1,6 +1,7 @@
 # music-player-react
 Music Player ~ React Exploration
 
+![screenshot](https://i.imgur.com/nDXpOfv.png "screenshot")
 
 ## Demo Link
 > `Open in Mobile View`
